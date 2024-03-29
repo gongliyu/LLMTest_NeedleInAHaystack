@@ -2,7 +2,7 @@ import os
 from operator import itemgetter
 from typing import Optional
 
-from openai import AsyncOpenAI
+from openai import AsyncAzureOpenAI
 from langchain_openai import ChatOpenAI  
 from langchain.prompts import PromptTemplate
 import tiktoken
@@ -25,7 +25,8 @@ class OpenAI(ModelProvider):
                                       temperature = 0)
 
     def __init__(self,
-                 model_name: str = "gpt-3.5-turbo-0125",
+                 # model_name: str = "gpt-3.5-turbo-0125",
+                 model_name: str = "GPT4_32k",
                  model_kwargs: dict = DEFAULT_MODEL_KWARGS):
         """
         Initializes the OpenAI model provider with a specific model.
@@ -37,15 +38,17 @@ class OpenAI(ModelProvider):
         Raises:
             ValueError: If NIAH_MODEL_API_KEY is not found in the environment.
         """
-        api_key = os.getenv('NIAH_MODEL_API_KEY')
+        api_key = os.getenv('AZURE_OPENAI_API_KEY')
         if (not api_key):
-            raise ValueError("NIAH_MODEL_API_KEY must be in env.")
+            raise ValueError("AZURE_OPENAI_API_KEY must be in env.")
 
         self.model_name = model_name
         self.model_kwargs = model_kwargs
         self.api_key = api_key
-        self.model = AsyncOpenAI(api_key=self.api_key)
-        self.tokenizer = tiktoken.encoding_for_model(self.model_name)
+        self.model = AsyncAzureOpenAI(api_key=self.api_key,
+                                      api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
+                                      azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'))
+        self.tokenizer = tiktoken.encoding_for_model('gpt-4')
     
     async def evaluate_model(self, prompt: str) -> str:
         """

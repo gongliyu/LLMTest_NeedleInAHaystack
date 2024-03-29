@@ -3,7 +3,7 @@ import os
 from .evaluator import Evaluator
 
 from langchain.evaluation import load_evaluator
-from langchain_community.chat_models import ChatOpenAI
+from langchain_community.chat_models import AzureChatOpenAI
 
 class OpenAIEvaluator(Evaluator):
     DEFAULT_MODEL_KWARGS: dict = dict(temperature=0)
@@ -16,7 +16,8 @@ class OpenAIEvaluator(Evaluator):
                 Only respond with a numberical score"""}
 
     def __init__(self,
-                 model_name: str = "gpt-3.5-turbo-0125",
+                 # model_name: str = "gpt-3.5-turbo-0125",
+                 model_name: str = "GPT4_32k",
                  model_kwargs: dict = DEFAULT_MODEL_KWARGS,
                  true_answer: str = None,
                  question_asked: str = None,):
@@ -35,15 +36,16 @@ class OpenAIEvaluator(Evaluator):
         self.true_answer = true_answer
         self.question_asked = question_asked
 
-        api_key = os.getenv('NIAH_EVALUATOR_API_KEY')
+        api_key = os.getenv('AZURE_OPENAI_API_KEY')
         if (not api_key):
-            raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
+            raise ValueError("AZURE_OPENAI_API_KEY must be in env for using openai evaluator.")
 
         self.api_key = api_key
         
-        self.evaluator = ChatOpenAI(model=self.model_name,
-                                    openai_api_key=self.api_key,
-                                    **self.model_kwargs)
+        self.evaluator = AzureChatOpenAI(azure_deployment='GPT4_32k',
+                                        # openai_api_key=self.api_key,
+                                         openai_api_version='2023-05-15',
+                                        **self.model_kwargs)
 
     def evaluate_response(self, response: str) -> int:
         evaluator = load_evaluator(
